@@ -1,7 +1,7 @@
 # ERPNext 魔法指令說明
 
 建立日期： 2026-04-18
-適用版本： ERPNext v14 / v15
+適用版本： ERPNext v16（已於 2026-04-18 升級至 Frappe v16.15.0 / ERPNext v16.14.0）
 發生環境： 本機開發環境 /home/stanley
 
 ---
@@ -31,12 +31,15 @@ ERPNext 的自訂腳本（Client Script、Custom Field、Property Setter）
 
 ```bash
 cd /home/stanley/projects/erpnext-customizations
-python3 export.py
+/home/stanley/frappe-bench/env/bin/python export.py
 git diff --stat
 git add .
 git commit -m "update: [你說明的修改內容]"
 git push
 ```
+
+> ⚠️ **注意**：export.py 必須使用 bench 的虛擬環境 Python，
+> 使用系統 `python3` 會因缺少 `orjson` 等套件而失敗。
 
 ### 相關資訊
 
