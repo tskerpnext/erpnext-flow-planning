@@ -11,6 +11,7 @@
 erpnext-flow-planning/
 ├── 0418_框架訂單與生產工單流程規劃.md
 ├── 0418_ERPNext魔法指令說明.md
+├── 0419_報價單顯示BOM物料成本明細_PrintFormat規劃.md
 └── 遷移及升級/
     ├── 0417_ERPNext自訂內容版本控制說明書.md
     └── 0418_需手動還原的程式碼修改清單.md
@@ -22,6 +23,7 @@ erpnext-flow-planning/
 |------|------|------|
 | [0418_框架訂單與生產工單流程規劃](0418_框架訂單與生產工單流程規劃.md) | 客戶提供月度銷售預測，透過 Blanket Order 管理，串聯 Sales Order、Production Plan、Work Order 的完整流程與自訂設定 | 2026-04-18 |
 | [0418_ERPNext魔法指令說明](0418_ERPNext魔法指令說明.md) | Claude Code 魔法指令說明：匯出自訂內容 push、流程規劃文件 push，含完整路徑與操作步驟 | 2026-04-18 |
+| [0419_報價單顯示BOM物料成本明細_PrintFormat規劃](0419_報價單顯示BOM物料成本明細_PrintFormat規劃.md) | 報價單列印時展開 BOM 原物料明細與成本數字的 Custom Print Format 規劃，含完整 Jinja 程式碼 | 2026-04-19 |
 
 ### 遷移及升級/
 
