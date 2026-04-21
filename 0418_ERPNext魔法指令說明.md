@@ -23,15 +23,17 @@ Claude 會自動執行對應的完整流程，不需再說明路徑或帳號。
 
 ### 用途
 
-ERPNext 的自訂腳本（Client Script、Custom Field、Property Setter）
-存放在 MariaDB 資料庫中，無法直接用 Git 追蹤。
-此指令會先用 export.py 將資料庫內容匯出成 JSON 檔案，再 commit 並推送到 GitHub。
+ERPNext 的自訂內容（Client Script、Custom Field、Property Setter、Server Script、
+Tax Category、稅費模板等）存放在 MariaDB 資料庫中，無法直接用 Git 追蹤。
+此指令會先用 export.py 將資料庫內容匯出成 JSON 檔案，**自動更新 README.md**，
+再 commit 並推送到 GitHub。
 
 ### Claude 執行步驟
 
 ```bash
 cd /home/stanley/projects/erpnext-customizations
-/home/stanley/frappe-bench/env/bin/python export.py
+source /home/stanley/frappe-bench/env/bin/activate
+python3 export.py          # 匯出 JSON + 自動更新 README.md
 git diff --stat
 git add .
 git commit -m "update: [你說明的修改內容]"
@@ -40,6 +42,26 @@ git push
 
 > ⚠️ **注意**：export.py 必須使用 bench 的虛擬環境 Python，
 > 使用系統 `python3` 會因缺少 `orjson` 等套件而失敗。
+
+### export.py 匯出範圍（2026-04-21 更新）
+
+| 資料夾 | DocType | 說明 |
+|--------|---------|------|
+| `client_scripts/` | Client Script | 表單邏輯腳本 |
+| `custom_fields/` | Custom Field | 自訂欄位 |
+| `property_setters/` | Property Setter | 表單屬性設定 |
+| `print_formats/` | Print Format | 自訂列印格式（standard=No） |
+| `server_scripts/` | Server Script | 後端事件腳本 |
+| `translations/` | Translation | 自訂翻譯詞條 |
+| `tax_categories/` | Tax Category | 稅種分類 |
+| `sales_tax_templates/` | Sales Taxes and Charges Template | 銷售稅費模板 |
+| `item_tax_templates/` | Item Tax Template | 品項稅費模板 |
+
+### README.md 自動更新說明
+
+export.py 執行完匯出後，會自動掃描所有 JSON 檔案並重新產生
+`erpnext-customizations/README.md` 中的「已備份的自訂內容」區塊，
+包含各類型的名稱、DocType、稅率等欄位，**無需手動維護 README**。
 
 ### 相關資訊
 
