@@ -1,6 +1,7 @@
 # ERPNext 魔法指令說明
 
 建立日期： 2026-04-18
+更新日期： 2026-04-21（export.py 新增匯出範圍、自動更新 README 功能）
 適用版本： ERPNext v16（已於 2026-04-18 升級至 Frappe v16.15.0 / ERPNext v16.14.0）
 發生環境： 本機開發環境 /home/stanley
 
