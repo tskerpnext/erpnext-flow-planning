@@ -32,7 +32,7 @@ erpnext-flow-planning/
 └── 遷移及升級/
     ├── 0417_ERPNext自訂內容版本控制說明書.md
     ├── 0418_需手動還原的程式碼修改清單.md
-    └── 0422_ERPNext版本升級說明書.md
+    └── 0429_ERPNext版本升級說明書.md
 ```
 
 ### 根目錄
@@ -70,13 +70,13 @@ erpnext-flow-planning/
 |------|------|------|
 | [0417_ERPNext自訂內容版本控制說明書](遷移及升級/0417_ERPNext自訂內容版本控制說明書.md) | ERPNext 自訂內容（Client Script、Custom Field、Property Setter）的版本控制方式與備份還原流程 | 2026-04-17 |
 | [0418_需手動還原的程式碼修改清單](遷移及升級/0418_需手動還原的程式碼修改清單.md) | 直接修改原始碼與系統設定檔的清單，升級或遷移時需手動重新套用，含 Nos 整數修正、Socket.IO 修正、Nginx 設定等 | 2026-04-18 |
-| [0422_ERPNext版本升級說明書](遷移及升級/0422_ERPNext版本升級說明書.md) | bench update 升級流程，含 `--reset` 快捷方式（適用無自訂 app 程式碼）與傳統方式（git stash）的對比說明，以及 systemd 重啟關鍵步驟 | 2026-04-22 |
+| [0429_ERPNext版本升級說明書](遷移及升級/0429_ERPNext版本升級說明書.md) | bench update 升級流程，含 `--reset` 快捷方式（適用無自訂 app 程式碼）與傳統方式（git stash）的對比說明，以及 systemd 重啟關鍵步驟 | 2026-04-29 |
 
 ---
 
 ## 適用環境
 
-- **ERPNext 版本：** V16（Frappe v16.16.0 / ERPNext v16.15.0）
+- **ERPNext 版本：** V16（Frappe v16.17.0 / ERPNext v16.16.0）
 - **情境：** 製造業（電纜/機電產品），含銷售訂單、交貨、報價、生產工單流程規劃與自訂腳本
 
 ---

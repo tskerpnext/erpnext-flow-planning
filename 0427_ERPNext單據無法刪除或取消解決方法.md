@@ -1,7 +1,7 @@
 # ERPNext — 單據無法刪除或取消 解決方法
 
 **建立日期**：2026-04-15
-**更新日期**：2026-04-27（新增方法 C：批號被孤立 Bundle 卡住）
+**更新日期**：2026-04-29（新增銷售發票 Sales Invoice 處理）
 
 ---
 
@@ -13,6 +13,7 @@
 | 銷售出庫 Delivery Note | `由于销售出库 MAT-DN-2026-xxxxx 与总账分录 xxxxxxxx 关联，无法删除或取消` |
 | 庫存調賬 Stock Reconciliation | `由于库存调账 MAT-RECO-2026-xxxxx 与总账分录 xxxxxxxx 关联，无法删除或取消` |
 | 批號 Batch | `由于批号 xxx 与序列号与批号 xxxxxxxxxxxxxxxx 关联，无法删除或取消` |
+| 銷售發票 Sales Invoice | `由于销售发票 ACC-SINV-2026-xxxxx 与收付款台账 xxxxxxxx 关联，无法删除或取消` |
 
 ---
 
@@ -30,6 +31,7 @@ ERPNext 單據提交後會產生關聯記錄（GL Entry、SLE、Serial and Batch
 | Stock Entry、Delivery Note | **方法 A：frappe.delete_doc**（框架自動清理 SLE/Bin） |
 | Stock Reconciliation（尤其有 amended 版本） | **方法 B：直接 SQL**（amended 鏈需手動控制刪除順序） |
 | 批號被 Serial and Batch Bundle 卡住 | **方法 C：直接 SQL 清除孤立 Bundle 再刪 Batch** |
+| Sales Invoice（已取消，Payment Ledger Entry delinked） | **方法 A：frappe.delete_doc** |
 
 ---
 
@@ -90,11 +92,15 @@ frappe.delete_doc("Stock Entry", "MAT-STE-2026-xxxxx", force=True, ignore_permis
 # Delivery Note
 frappe.delete_doc("Delivery Note", "MAT-DN-2026-xxxxx", force=True, ignore_permissions=True)
 
+# Sales Invoice
+frappe.delete_doc("Sales Invoice", "ACC-SINV-2026-xxxxx", force=True, ignore_permissions=True)
+
 frappe.db.commit()
 ```
 
 > ✅ `frappe.delete_doc` 走框架，會自動刪除關聯的 SLE、更新 Bin.actual_qty、清除子表記錄。
 > ⚠️ Delivery Note 刪除後，對應的 Sales Order 狀態會回到未出貨，確認符合預期再執行。
+> ℹ️ Sales Invoice 的 Payment Ledger Entry（收付款台账）若已 delinked=1，直接 delete_doc 即可；若 delinked=0 代表有未結清款項，需先確認付款狀態再處理。
 
 按 **Ctrl+D** 離開 console。
 
