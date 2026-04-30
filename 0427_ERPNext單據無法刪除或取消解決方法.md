@@ -1,7 +1,7 @@
 # ERPNext — 單據無法刪除或取消 解決方法
 
 **建立日期**：2026-04-15
-**更新日期**：2026-04-22（整合 Stock Entry、Delivery Note、Stock Reconciliation 三種情境）
+**更新日期**：2026-04-29（新增銷售發票 Sales Invoice 處理）
 
 ---
 
@@ -12,6 +12,8 @@
 | 物料移動 Stock Entry | `由于物料移动 MAT-STE-2026-xxxxx 与物料凭证 xxxxxxxx 关联，无法删除或取消` |
 | 銷售出庫 Delivery Note | `由于销售出库 MAT-DN-2026-xxxxx 与总账分录 xxxxxxxx 关联，无法删除或取消` |
 | 庫存調賬 Stock Reconciliation | `由于库存调账 MAT-RECO-2026-xxxxx 与总账分录 xxxxxxxx 关联，无法删除或取消` |
+| 批號 Batch | `由于批号 xxx 与序列号与批号 xxxxxxxxxxxxxxxx 关联，无法删除或取消` |
+| 銷售發票 Sales Invoice | `由于销售发票 ACC-SINV-2026-xxxxx 与收付款台账 xxxxxxxx 关联，无法删除或取消` |
 
 ---
 
@@ -28,6 +30,8 @@ ERPNext 單據提交後會產生關聯記錄（GL Entry、SLE、Serial and Batch
 |------|---------|
 | Stock Entry、Delivery Note | **方法 A：frappe.delete_doc**（框架自動清理 SLE/Bin） |
 | Stock Reconciliation（尤其有 amended 版本） | **方法 B：直接 SQL**（amended 鏈需手動控制刪除順序） |
+| 批號被 Serial and Batch Bundle 卡住 | **方法 C：直接 SQL 清除孤立 Bundle 再刪 Batch** |
+| Sales Invoice（已取消，Payment Ledger Entry delinked） | **方法 A：frappe.delete_doc** |
 
 ---
 
@@ -88,11 +92,15 @@ frappe.delete_doc("Stock Entry", "MAT-STE-2026-xxxxx", force=True, ignore_permis
 # Delivery Note
 frappe.delete_doc("Delivery Note", "MAT-DN-2026-xxxxx", force=True, ignore_permissions=True)
 
+# Sales Invoice
+frappe.delete_doc("Sales Invoice", "ACC-SINV-2026-xxxxx", force=True, ignore_permissions=True)
+
 frappe.db.commit()
 ```
 
 > ✅ `frappe.delete_doc` 走框架，會自動刪除關聯的 SLE、更新 Bin.actual_qty、清除子表記錄。
 > ⚠️ Delivery Note 刪除後，對應的 Sales Order 狀態會回到未出貨，確認符合預期再執行。
+> ℹ️ Sales Invoice 的 Payment Ledger Entry（收付款台账）若已 delinked=1，直接 delete_doc 即可；若 delinked=0 代表有未結清款項，需先確認付款狀態再處理。
 
 按 **Ctrl+D** 離開 console。
 
@@ -194,6 +202,88 @@ WHERE name IN ('MAT-RECO-2026-xxxxx');
 
 ---
 
+## 方法 C：批號被孤立 Bundle 卡住
+
+適用：刪除 **Batch（批號）** 時出現 `由于批号 xxx 与序列号与批号 xxxxxxxx 关联，无法删除或取消`
+
+常見原因：原本關聯的主單據（Stock Reconciliation 等）已被刪除，但 Serial and Batch Bundle 成為孤立記錄，仍持有對 Batch 的連結。
+
+---
+
+### Step 1：確認 Batch 與 Bundle 狀態
+
+```bash
+cd /home/stanley/frappe-bench
+bench --site site1.local mariadb
+```
+
+```sql
+-- 確認 Batch
+SELECT name, item, batch_qty, disabled FROM `tabBatch` WHERE name = 'xxx';
+
+-- 確認 Bundle（用錯誤訊息中的 Bundle name）
+SELECT name, voucher_no, voucher_type, item_code, docstatus
+FROM `tabSerial and Batch Bundle`
+WHERE name = 'xxxxxxxxxxxxxxxx';
+```
+
+若 `voucher_no` 指向的主單據已不存在（或已刪），即為孤立記錄，可安全刪除。
+
+---
+
+### Step 2：確認 Bundle 子表內容
+
+```sql
+SELECT name, parent, batch_no, qty
+FROM `tabSerial and Batch Entry`
+WHERE parent = 'xxxxxxxxxxxxxxxx';
+```
+
+---
+
+### Step 3：刪除孤立 Bundle
+
+```sql
+-- 先刪子表
+DELETE FROM `tabSerial and Batch Entry` WHERE parent = 'xxxxxxxxxxxxxxxx';
+
+-- 再刪主表
+DELETE FROM `tabSerial and Batch Bundle` WHERE name = 'xxxxxxxxxxxxxxxx';
+```
+
+按 `exit` 離開 mariadb。
+
+---
+
+### Step 4：刪除 Batch
+
+```bash
+bench --site site1.local console
+```
+
+```python
+frappe.delete_doc("Batch", "xxx", force=True, ignore_permissions=True)
+frappe.db.commit()
+```
+
+按 **Ctrl+D** 離開 console。
+
+---
+
+### Step 5：確認清除
+
+```bash
+bench --site site1.local mariadb
+```
+
+```sql
+SELECT name FROM `tabBatch` WHERE name = 'xxx';
+SELECT name FROM `tabSerial and Batch Bundle` WHERE name = 'xxxxxxxxxxxxxxxx';
+-- 兩筆均應回傳空結果
+```
+
+---
+
 ## 若有關聯的 Pick List 也需刪除
 
 Pick List 必須在 Stock Entry 刪除後才能處理：
@@ -215,17 +305,26 @@ frappe.db.commit()
 | amended 刪除順序 | 最新版本（-2）→ 中間（-1）→ 原始版本，不可顛倒 |
 | Delivery Note 刪除影響 | 對應 Sales Order 會回到未出貨狀態 |
 | 初始入庫記錄 | 若調賬單是品項唯一入庫，刪除後需重新建調賬單補回庫存 |
+| Bundle 孤立判斷 | voucher_no 指向的主單據不存在，且 Bundle docstatus = 2，才算孤立 |
 
 ---
 
 ## 孤立 Bundle 清查 SQL（定期維護）
 
 ```sql
+-- Stock Entry 類孤立 Bundle
 SELECT b.name, b.voucher_no, b.item_code
 FROM `tabSerial and Batch Bundle` b
 LEFT JOIN `tabStock Entry` se ON b.voucher_no = se.name
 WHERE b.voucher_type = 'Stock Entry'
   AND se.name IS NULL;
+
+-- Stock Reconciliation 類孤立 Bundle
+SELECT b.name, b.voucher_no, b.item_code
+FROM `tabSerial and Batch Bundle` b
+LEFT JOIN `tabStock Reconciliation` sr ON b.voucher_no = sr.name
+WHERE b.voucher_type = 'Stock Reconciliation'
+  AND sr.name IS NULL;
 ```
 
 ---
@@ -238,5 +337,5 @@ WHERE b.voucher_type = 'Stock Entry'
 
 ---
 
-*建立日期：2026-04-15 ／ 更新日期：2026-04-22*
+*建立日期：2026-04-15 ／ 更新日期：2026-04-27*
 *適用版本：ERPNext v16 / Frappe v16*

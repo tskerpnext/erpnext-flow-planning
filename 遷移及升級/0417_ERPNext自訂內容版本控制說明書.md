@@ -180,13 +180,16 @@ bench restart
 erpnext-customizations/
 ├── client_scripts/         # Client Script（JS 邏輯腳本）
 │   ├── BOM自动规划发料仓.json
-│   └── Sales_Order-自動選倉.json
+│   ├── Sales_Order-自動選倉.json
+│   └── 工單入庫依發料批號分拆.json      # 工單入庫時依發料記錄自動分拆批號
+├── server_scripts/         # Server Script（Python 後端腳本，export.py 匯出，import.py 尚未支援）
+│   └── get_wo_issue_batches.json        # 工單發料批號查詢 API（供 Client Script 呼叫）
 ├── custom_fields/          # 自訂欄位
 │   └── *.json
 ├── property_setters/       # 表單屬性設定
 │   └── *.json
 ├── export.py               # 從開發機匯出用
-└── import.py               # 部署到正式機用
+└── import.py               # 部署到正式機用（server_scripts 需手動匯入）
 ```
 
 ---
