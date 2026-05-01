@@ -24,18 +24,19 @@ erpnext-flow-planning/
 ├── 0423_開票管理會計功能說明.md
 ├── 0423_銷售發票與收款流程說明.md
 ├── 0427_ERPNext單據無法刪除或取消解決方法.md
-├── 0428_工單入庫依發料批號分拆說明書.md
 ├── 0428_Stock_Entry物料行顏色指示燈說明.md
+├── 0428_工單入庫依發料批號分拆說明書.md
 ├── 0428_工單發料自動填入線邊倉批號說明書.md
-├── 0430_生產工單自訂子表格建立說明.md
 ├── 0430_ERPNext備份與還原流程說明.md
 ├── 0430_ERPNext差異化領料策略設定指南.md
+├── 0430_生產工單自訂子表格建立說明.md
 ├── 待確認事項/
 │   ├── 0422_銷售模組流程與月結對帳自動化規劃.md
 │   └── 0430_ERPNext導入規劃時程.md
 └── 遷移及升級/
-    ├── 0417_ERPNext自訂內容版本控制說明書.md
+    ├── 0501_ERPNext自訂內容版本控制說明書.md
     ├── 0418_需手動還原的程式碼修改清單.md
+    ├── 0429_ERPNext_v16.16.0_更新日誌.md
     └── 0429_ERPNext版本升級說明書.md
 ```
 
@@ -76,8 +77,9 @@ erpnext-flow-planning/
 
 | 文件 | 說明 | 日期 |
 |------|------|------|
-| [0417_ERPNext自訂內容版本控制說明書](遷移及升級/0417_ERPNext自訂內容版本控制說明書.md) | ERPNext 自訂內容（Client Script、Custom Field、Property Setter）的版本控制方式與備份還原流程 | 2026-04-17 |
+| [0501_ERPNext自訂內容版本控制說明書](遷移及升級/0501_ERPNext自訂內容版本控制說明書.md) | ERPNext 自訂內容（DocType、Client Script、Custom Field、Property Setter 等）的版本控制方式、備份範圍對照表與正式機部署流程 | 2026-05-01 |
 | [0418_需手動還原的程式碼修改清單](遷移及升級/0418_需手動還原的程式碼修改清單.md) | 直接修改原始碼與系統設定檔的清單，升級或遷移時需手動重新套用，含 Nos 整數修正、Socket.IO 修正、Nginx 設定等 | 2026-04-18 |
+| [0429_ERPNext_v16.16.0_更新日誌](遷移及升級/0429_ERPNext_v16.16.0_更新日誌.md) | ERPNext v16.16.0 官方 Release Note 繁體中文翻譯，含製造、採購、會計模組更新項目 | 2026-04-29 |
 | [0429_ERPNext版本升級說明書](遷移及升級/0429_ERPNext版本升級說明書.md) | bench update 升級流程，含 `--reset` 快捷方式（適用無自訂 app 程式碼）與傳統方式（git stash）的對比說明，以及 systemd 重啟關鍵步驟 | 2026-04-29 |
 
 ---
@@ -99,13 +101,15 @@ mmdd_文件名稱.md
 
 例如：`0418_框架訂單與生產工單流程規劃.md`
 
+更新現有文件時，檔名前綴改為當天日期，並在開頭加入「更新日期：」欄位。
+
 ---
 
 ## 相關 Repository
 
 | Repo | 說明 |
 |------|------|
-| [erpnext-customizations](https://github.com/tskerpnext/erpnext-customizations) | ERPNext 自訂腳本、Custom Field、Property Setter 版本控制 |
+| [erpnext-customizations](https://github.com/tskerpnext/erpnext-customizations) | ERPNext 自訂腳本、Custom Field、Property Setter、Custom DocType 版本控制 |
 
 ---
 

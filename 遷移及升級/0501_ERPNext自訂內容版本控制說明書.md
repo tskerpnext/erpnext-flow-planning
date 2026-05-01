@@ -1,6 +1,7 @@
 # ERPNext 自訂內容版本控制說明書
 
 建立日期：2026-04-17
+更新日期：2026-05-01
 適用版本：ERPNext V16
 發生環境：本機（192.168.1.60）
 
@@ -115,7 +116,8 @@ git push
 |------|------|
 | 修改腳本邏輯 | `update: BOM發料倉改為優先選原料倉` |
 | 新增腳本 | `feat: 新增Work Order自動填倉腳本` |
-| 修改欄位 | `update: Work Order新增Section1 Date欄位` |
+| 新增欄位 | `feat: 生產工單新增生產排程子表格` |
+| 刪除欄位 | `remove: 移除 Work Order 自訂欄位 Section1 Date` |
 | 刪除腳本 | `remove: 移除舊版Sales Order選倉邏輯` |
 
 ### Claude Code CLI 魔法指令
@@ -155,14 +157,18 @@ SITE_NAME  = 'site1.local'               # ← 改成正式機站台名稱
 ### 步驟 3：執行匯入
 
 ```bash
-# 匯入全部
+# 匯入全部（含 custom_doctypes）
 python3 import.py
 
 # 或只匯入特定類型
+python3 import.py custom_doctypes    # 自訂子表格 DocType（需在 custom_fields 之前）
 python3 import.py client_scripts
 python3 import.py custom_fields
 python3 import.py property_setters
+python3 import.py print_formats
 ```
+
+> **注意**：`custom_doctypes` 需先於 `custom_fields` 匯入，因為子表格 DocType 必須存在，Custom Field（Table 類型）才能正確連結。
 
 ### 步驟 4：重啟 ERPNext 讓設定生效
 
@@ -178,15 +184,21 @@ bench restart
 
 ```
 erpnext-customizations/
+├── custom_doctypes/        # 自訂子表格 DocType（custom=1，export.py 匯出，import.py 支援）
+│   └── Work_Order_Production_Schedule.json   # 生產排程子表格
 ├── client_scripts/         # Client Script（JS 邏輯腳本）
 │   ├── BOM自动规划发料仓.json
 │   ├── Sales_Order-自動選倉.json
-│   └── 工單入庫依發料批號分拆.json      # 工單入庫時依發料記錄自動分拆批號
+│   ├── 工單入庫依發料批號分拆.json
+│   ├── 工單發料自動填入線邊倉批號.json
+│   └── Work_Order_-_生產排程自動填入.json   # 依物料組自動填入排程項目
 ├── server_scripts/         # Server Script（Python 後端腳本，export.py 匯出，import.py 尚未支援）
-│   └── get_wo_issue_batches.json        # 工單發料批號查詢 API（供 Client Script 呼叫）
+│   └── get_wo_issue_batches.json             # 工單發料批號查詢 API
 ├── custom_fields/          # 自訂欄位
 │   └── *.json
 ├── property_setters/       # 表單屬性設定
+│   └── *.json
+├── print_formats/          # 自訂列印格式（standard=No）
 │   └── *.json
 ├── export.py               # 從開發機匯出用
 └── import.py               # 部署到正式機用（server_scripts 需手動匯入）
@@ -194,7 +206,26 @@ erpnext-customizations/
 
 ---
 
-## 五、token 過期處理
+## 五、備份範圍對照表
+
+| DocType | 資料夾 | export.py | import.py |
+|---------|--------|-----------|-----------|
+| DocType（custom=1） | `custom_doctypes/` | ✓ | ✓ |
+| Client Script | `client_scripts/` | ✓ | ✓ |
+| Custom Field | `custom_fields/` | ✓ | ✓ |
+| Property Setter | `property_setters/` | ✓ | ✓ |
+| Print Format（standard=No） | `print_formats/` | ✓ | ✓ |
+| Server Script | `server_scripts/` | ✓ | ✗（需手動） |
+| Translation | `translations/` | ✓ | ✗（需手動） |
+| Tax Category | `tax_categories/` | ✓ | ✗（需手動） |
+| Sales Taxes and Charges Template | `sales_tax_templates/` | ✓ | ✗（需手動） |
+| Item Tax Template | `item_tax_templates/` | ✓ | ✗（需手動） |
+| Payment Term | `payment_terms/` | ✓ | ✗（需手動） |
+| Payment Terms Template | `payment_terms_templates/` | ✓ | ✗（需手動） |
+
+---
+
+## 六、token 過期處理
 
 token 到期後需重新產生並更新本機設定：
 
