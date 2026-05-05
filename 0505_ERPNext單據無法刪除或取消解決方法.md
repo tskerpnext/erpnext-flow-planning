@@ -1,7 +1,7 @@
 # ERPNext — 單據無法刪除或取消 解決方法
 
 **建立日期**：2026-04-15
-**更新日期**：2026-04-29（新增銷售發票 Sales Invoice 處理）
+**更新日期**：2026-05-05（新增 SLE actual_qty 異常修正章節；強化 check_stock_integrity.py 警告說明）
 
 ---
 
@@ -114,7 +114,12 @@ source /home/stanley/frappe-bench/env/bin/activate
 python3 check_stock_integrity.py
 ```
 
-有不一致才執行 `--fix`。
+腳本會回報兩種類型，處理方式不同：
+
+| 警告類型 | 符號 | 意義 | 處理方式 |
+|---------|------|------|---------|
+| 一般不一致 | ⚠️ | Bin 與 SLE 加總不符，SLE 為準 | 執行 `--fix` 自動修正 |
+| SLE 疑似異常 | 🔍 | `SUM(actual_qty)=0` 但 `qty_after_transaction>0` | **不可用 `--fix`**，參考下方「SLE actual_qty 異常修正」 |
 
 ---
 
@@ -284,6 +289,81 @@ SELECT name FROM `tabSerial and Batch Bundle` WHERE name = 'xxxxxxxxxxxxxxxx';
 
 ---
 
+---
+
+## 附錄：SLE actual_qty 異常修正
+
+### 發生情境
+
+執行 `check_stock_integrity.py` 後出現 🔍 警告（而非 ⚠️），顯示：
+
+```
+🔍 發現 N 筆 SLE actual_qty 疑似異常（加總=0 但 qty_after_transaction>0）
+```
+
+**根本原因**：Stock Reconciliation 提交時，若目標數量等於當前 Bin 數量（差異 = 0），ERPNext 仍建立 SLE，但 `actual_qty` 寫入 0，`qty_after_transaction` 則正確記錄。腳本用 `SUM(actual_qty)` 比對時誤判為不一致。
+
+---
+
+### Step 1：確認受影響品項與倉庫
+
+由腳本輸出取得 `item_code` 與 `warehouse`，或直接查詢：
+
+```sql
+SELECT item_code, warehouse, actual_qty, qty_after_transaction, voucher_no, posting_date
+FROM `tabStock Ledger Entry`
+WHERE is_cancelled = 0
+  AND actual_qty = 0
+  AND qty_after_transaction > 0
+ORDER BY warehouse, item_code;
+```
+
+確認 `qty_after_transaction` 與 Bin 顯示的庫存一致（代表 Bin 正確、只是 SLE actual_qty 記錯）。
+
+---
+
+### Step 2：SQL 修正 SLE actual_qty
+
+```bash
+cd /home/stanley/frappe-bench
+bench --site site1.local mariadb
+```
+
+```sql
+UPDATE `tabStock Ledger Entry`
+SET actual_qty = qty_after_transaction
+WHERE item_code IN ('品項1', '品項2', ...)
+  AND warehouse = '倉庫名稱 - SKT'
+  AND is_cancelled = 0
+  AND actual_qty = 0
+  AND qty_after_transaction > 0;
+```
+
+> ⚠️ `IN` 清單請依 Step 1 查詢結果填入，勿使用萬用條件避免誤改其他記錄。
+
+按 `exit` 離開。
+
+---
+
+### Step 3：驗證
+
+```bash
+cd /home/stanley/projects/erpnext-customizations
+python3 check_stock_integrity.py
+```
+
+應回報 `✅ 所有 Bin 數量與 SLE 一致，無需修正。`
+
+---
+
+### 預防說明
+
+此問題源自 ERPNext 框架寫入邏輯，目前採**觀察策略**：
+- `check_stock_integrity.py` 已加入偵測，下次發生時可即時發現
+- 若調賬頻率提高導致問題常態出現，可評估加裝 Server Script 在 Stock Reconciliation `on_submit` 後自動修正
+
+---
+
 ## 若有關聯的 Pick List 也需刪除
 
 Pick List 必須在 Stock Entry 刪除後才能處理：
@@ -306,6 +386,7 @@ frappe.db.commit()
 | Delivery Note 刪除影響 | 對應 Sales Order 會回到未出貨狀態 |
 | 初始入庫記錄 | 若調賬單是品項唯一入庫，刪除後需重新建調賬單補回庫存 |
 | Bundle 孤立判斷 | voucher_no 指向的主單據不存在，且 Bundle docstatus = 2，才算孤立 |
+| check_stock_integrity.py 警告分類 | ⚠️ 一般不一致可用 `--fix`；🔍 SLE 疑似異常需人工確認後 SQL 修正，不可直接 `--fix` |
 
 ---
 
@@ -337,5 +418,5 @@ WHERE b.voucher_type = 'Stock Reconciliation'
 
 ---
 
-*建立日期：2026-04-15 ／ 更新日期：2026-04-27*
+*建立日期：2026-04-15 ／ 更新日期：2026-05-05*
 *適用版本：ERPNext v16 / Frappe v16*
