@@ -1,7 +1,22 @@
 # ERPNext v16.16.0 更新日誌 (繁體中文翻譯)
 
 > - **建立日期：** 2026-04-29
+> - **更新日期：** 2026-06-09
 > - **來源：** [GitHub Release v16.16.0](https://github.com/frappe/erpnext/releases/tag/v16.16.0)
+
+---
+
+## 環境資訊
+
+| 項目 | 內容 |
+|------|------|
+| bench 路徑 | `/home/stanley/frappe-bench` |
+| 站台名稱 | `site1.local` |
+| 服務管理方式 | systemd |
+| 第一次升級 | Frappe v16.14.0 / ERPNext v16.13.3 → Frappe v16.15.0 / ERPNext v16.14.0 |
+| 第二次升級 | Frappe v16.15.0 / ERPNext v16.14.0 → Frappe v16.16.0 / ERPNext v16.15.0 |
+| 第三次升級 | Frappe v16.16.0 / ERPNext v16.15.0 → Frappe v16.17.0 / ERPNext v16.16.0 |
+| 第四次升級 | Frappe v16.17.0 / ERPNext v16.16.0 → Frappe v16.20.0 / ERPNext v16.21.1 |
 
 ---
 
