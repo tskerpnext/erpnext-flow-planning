@@ -59,7 +59,7 @@ erpnext-flow-planning/
 | [0423_銷售發票與收款流程說明](0423_銷售發票與收款流程說明.md) | 銷售發票建立、付款到期日說明、收付款申請 vs 收款憑證差異、對公轉帳/支付寶/微信支付/承兌匯票收款方式，含部分收款處理與中國大陸常見做法 | 2026-04-23 |
 | [0423_開票管理會計功能說明](0423_開票管理會計功能說明.md) | 開票管理五項會計功能說明：會計憑證更新台帳、收付款台帳重過帳、自動核銷收付款、取消收付款核銷、日記帳憑證，含使用時機與中國大陸常見分錄 | 2026-04-23 |
 | [0423_會計年度與關帳流程說明](0423_會計年度與關帳流程說明.md) | 會計年度作用、未建新年度的影響、新舊年度同時開放行為、關帳定義與期末結帳憑證關係、完整關帳流程（六模組前置確認→鎖帳→結帳→存檔）、MariaDB資料行為、GL分錄說明 | 2026-04-23 |
-| [0505_ERPNext單據無法刪除或取消解決方法](0505_ERPNext單據無法刪除或取消解決方法.md) | Stock Entry、Delivery Note、Stock Reconciliation、Batch、Sales Invoice 五種情境被 GL Entry / Serial and Batch Bundle 卡住時的強制取消與刪除步驟；含孤立 Bundle 清查、Bin 一致性驗證，以及 SLE actual_qty=0 異常（Stock Reconciliation 零差異）的偵測與 SQL 修正流程 | 2026-05-05 |
+| [0505_ERPNext單據無法刪除或取消解決方法](0505_ERPNext單據無法刪除或取消解決方法.md) | Stock Entry、Delivery Note、Stock Reconciliation、Batch、Sales Invoice 五種情境被 GL Entry / Serial and Batch Bundle 卡住時的強制取消與刪除步驟；含孤立 Bundle 清查、Bin 一致性驗證、SLE actual_qty=0 異常修正流程；**2026-06-09 新增永久修復方案**（erpnext_custom_app：ignore_links_on_delete hook 一勞永逸） | 2026-06-09 |
 | [0428_工單入庫依發料批號分拆說明書](0428_工單入庫依發料批號分拆說明書.md) | 工單入庫（Manufacture）建立時，自動依同工單已過帳發料記錄分拆批號至多行的 Client Script 說明，含觸發方式、執行邏輯、權限說明與部署資訊（✅ 已部署測試通過） | 2026-04-28 |
 | [0428_Stock_Entry物料行顏色指示燈說明](0428_Stock_Entry物料行顏色指示燈說明.md) | Stock Entry 物料行物料號左側紅/綠/藍圓點的定義（庫存不足/庫存充足/成品行），含實際案例與已提交單據顯示紅色為正常現象的說明 | 2026-04-28 |
 | [0428_工單發料自動填入線邊倉批號說明書](0428_工單發料自動填入線邊倉批號說明書.md) | 工單發料（Material Transfer for Manufacture）中線邊倉物料自動填入批號的 Client Script 說明，含批號 000 優先策略、多批號分拆邏輯、庫存不足防呆機制與完整程式碼（✅ 已部署測試通過） | 2026-04-28 |

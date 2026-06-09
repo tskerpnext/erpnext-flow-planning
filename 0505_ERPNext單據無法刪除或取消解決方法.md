@@ -1,7 +1,7 @@
 # ERPNext — 單據無法刪除或取消 解決方法
 
 **建立日期**：2026-04-15
-**更新日期**：2026-05-05（新增 SLE actual_qty 異常修正章節；強化 check_stock_integrity.py 警告說明）
+**更新日期**：2026-06-09（建立 erpnext_custom_app 永久修復，新增「永久修復方案」章節）
 
 ---
 
@@ -415,8 +415,71 @@ WHERE b.voucher_type = 'Stock Reconciliation'
 | 工具 | 路徑 | 說明 |
 |------|------|------|
 | check_stock_integrity.py | `/home/stanley/projects/erpnext-customizations/` | 檢查並修正 Bin 與 SLE 不一致 |
+| erpnext_custom_app | `/home/stanley/frappe-bench/apps/erpnext_custom_app/` | 永久修復 app：已取消關聯記錄不再阻止刪除 |
 
 ---
 
-*建立日期：2026-04-15 ／ 更新日期：2026-05-05*
+## 永久修復方案（2026-06-09 建立）
+
+### 原理
+
+Frappe 的 `get_linked_docs()` 在 Delete 檢查時，不會過濾已取消（`is_cancelled=1`）的關聯記錄，導致已取消的 Stock Entry、Delivery Note 等單據仍被 SLE/GL Entry 阻止刪除。
+
+解決方式：利用 Frappe 的 `ignore_links_on_delete` hook，將這些 ledger 型 doctype 加入忽略清單。因為 `check_permission_and_not_submitted` 仍然會阻擋已提交（docstatus=1）單據的刪除，所以此設定是安全的。
+
+### 實作
+
+已建立 custom app `erpnext_custom_app`，位於 `/home/stanley/frappe-bench/apps/erpnext_custom_app/`。
+
+`hooks.py` 中的設定：
+```python
+ignore_links_on_delete = [
+    "Stock Ledger Entry",        # 物料凭证
+    "GL Entry",                  # 总账分录
+    "Serial and Batch Bundle",   # 序列号与批号
+    "Payment Ledger Entry",      # 收付款台账
+]
+```
+
+### 效果
+
+以下單據取消後可直接刪除，不再出現「与 xxx 关联，无法删除或取消」錯誤：
+
+| DocType | 原本阻擋的關聯記錄 | 狀態 |
+|---------|------------------|------|
+| Stock Entry | Stock Ledger Entry | ✅ 永久修復 |
+| Delivery Note | Stock Ledger Entry / GL Entry | ✅ 永久修復 |
+| Stock Reconciliation | GL Entry | ✅ 永久修復 |
+| Batch | Serial and Batch Bundle | ✅ 永久修復 |
+| Sales Invoice | Payment Ledger Entry | ✅ 永久修復 |
+
+### 維護
+
+- App 安裝在 `/home/stanley/frappe-bench/apps/erpnext_custom_app/`
+- 檔案納入 `erpnext-customizations` git 管理（獨立備份）
+- `bench update` 不會覆蓋此 app
+- 若 `bench` 重新部署，需重新 `pip install -e apps/erpnext_custom_app` 並加入 `sites/apps.txt`
+
+### ⚠️ 安裝後必須重啟 Web Server
+
+`pip install` 後 **web server 不會自動載入新模組**，ERPNext 會顯示 **Internal Server Error**（`ModuleNotFoundError: No module named 'erpnext_custom_app'`）。
+
+原因是 gunicorn 使用 `--preload` 模式，所有 worker fork 自 pip install 之前就啟動的 master process。
+
+**安裝後務必執行：**
+
+```bash
+# 方法：重啟 web server
+cd /home/stanley/frappe-bench
+bench restart --web
+
+# 若 bench restart 無效，手動 kill gunicorn master：
+# kill $(ps aux | grep 'gunicorn.*frappe' | grep -v grep | awk '{print $2}' | head -1)
+```
+
+> ℹ️ 這是 2026-06-09 實際發生的教訓：安裝後未重啟導致站台癱瘓 5 分鐘。
+
+---
+
+*建立日期：2026-04-15 ／ 更新日期：2026-06-09*
 *適用版本：ERPNext v16 / Frappe v16*
